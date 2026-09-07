@@ -43,7 +43,7 @@ milestone-kit/                       this repo
 | `milestone-kit/skills/bootstrapping-milestones/` | Prepares a repo from an idea or a PRD/architecture doc, stage by stage, until `scripts/bootstrap/check` prints `READY` | `.claude/skills/bootstrapping-milestones` |
 | `milestone-kit/skills/adding-a-milestone/` | Turns a feature idea on a prepared repo into one roadmap milestone: triage, PRD and architecture deltas, one roadmap row, one STATUS row, verified by `check --milestone <M>` and `next --inputs <M>`. Never re-bootstraps, never starts the milestone | `.claude/skills/adding-a-milestone` |
 | `milestone-kit/skills/driving-a-milestone/` | Drives one milestone: claims it, spawns a worker per role in the worktree, relays owner gates, logs the roadmap §8 row after merge | `.claude/skills/driving-a-milestone` |
-| `milestone-kit/scripts/` | `bootstrap/{install,check}`, `milestone/{claim,spawn,brief,wait,status,exit-check,scope,next,log-decision,driver-state,journal,lib.sh}`, `hooks/{guard-scope,require-handoff,guard-superpowers-paths}.sh`, `sdd/*` | copied to `scripts/` (hooks must exist in every clone and worktree) |
+| `milestone-kit/scripts/` | `bootstrap/{install,update,check}`, `milestone/{claim,spawn,brief,wait,status,exit-check,scope,next,log-decision,driver-state,journal,lib.sh}`, `hooks/{guard-scope,require-handoff,guard-superpowers-paths}.sh`, `sdd/*` | copied to `scripts/` (hooks must exist in every clone and worktree) |
 | `milestone-kit/templates/` | `CLAUDE.md`, `docs/*` seeds (incl. `docs/journal/README.md`), `claude/settings*.json`, `codex/hooks.json`, `AGENTS.md`, `gitignore.block`, `milestone.config`; `{{TOKEN}}` placeholders are the content decisions the bootstrap fills | seeded once, never overwritten |
 | `skills/cc-session/` | `create-session.sh [--p-name PANE] [--s-name NAME] [--split-r\|--split-d]`, `stop-session.sh`; `--s-name` is passed as `claude --name` | `.claude/skills/cris-managed-session` when `MS_AGENT=claude` (default) |
 | `skills/cx-session/` | Same flags for `codex`; `--s-name` is applied through Codex's `/rename` after launch | `.claude/skills/cris-managed-session` when `install --agent codex` |
@@ -97,7 +97,8 @@ Edit under `milestone-kit/`, run its tests, then refresh each project:
 milestone-kit/scripts/milestone/tests/guard-scope.sh
 milestone-kit/scripts/milestone/tests/post-finish.sh
 milestone-kit/scripts/milestone/tests/journal.sh
-milestone-kit/scripts/bootstrap/install ~/code/my-app --no-templates
+# then, per project, from its root (first time: milestone-kit/scripts/bootstrap/update --commit from the kit)
+scripts/bootstrap/update --commit
 ```
 
 Skills are symlinks, so `SKILL.md` edits reach every project at once; scripts and hooks are copies and show as `DRIFT:` until refreshed. If the kit moves on disk, `check` prints a `NOTE: kit —` line for a stale `.milestone-kit` stamp; re-running `install` from the new location restamps it and refreshes the links.

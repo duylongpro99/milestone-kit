@@ -102,9 +102,11 @@ Scripts and hooks are copies inside each project (hooks must exist in every clon
 milestone-kit/scripts/milestone/tests/guard-scope.sh
 milestone-kit/scripts/milestone/tests/post-finish.sh
 milestone-kit/scripts/milestone/tests/journal.sh
-# then, per project
-milestone-kit/scripts/bootstrap/install ~/code/my-app --no-templates
+# then, per project, from its root
+scripts/bootstrap/update --commit
 ```
+
+`update` reads the kit path from `.milestone-kit`, re-runs the kit's `install` (copies refreshed, missing templates seeded, the `.gitignore` block refreshed between its markers, stamp rewritten), prints the `DRIFT:` / `MISSING:` / `MANUAL:` lines of `check`, and commits what changed. Without `--commit` it lists the changed paths instead. A project installed before `update` existed has no copy of it yet: run it from the kit once, `<kit>/scripts/bootstrap/update --commit`, from the project root; after that the project has its own. `--kit PATH` overrides the stamp when the kit checkout moved.
 
 `config` (`scripts/milestone/config`) is the project's and is never overwritten. Skills are symlinks, so `SKILL.md` edits reach every project at once.
 

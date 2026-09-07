@@ -78,10 +78,17 @@ if [ "$agent" = claude ]; then
   [ -f "$proj/.claude/settings.local.json" ] || [ -f "$proj/.claude/settings.local.json.example" ] || { cp "$kit/templates/claude/settings.local.json.example" "$proj/.claude/settings.local.json.example"; echo "SEEDED: .claude/settings.local.json.example (owner copies to settings.local.json and edits the allowlist)"; }
 fi
 
-# .gitignore block
+# .gitignore block: appended once; between its two markers it is the kit's, so a
+# newer template replaces it in place (the owner's own lines outside it are kept).
 if ! grep -q '^# ---- milestone-kit' "$proj/.gitignore" 2>/dev/null; then
   { [ -f "$proj/.gitignore" ] && [ -n "$(tail -c1 "$proj/.gitignore")" ] && echo; cat "$kit/templates/gitignore.block"; } >> "$proj/.gitignore"
   echo "COPIED: .gitignore (milestone-kit block appended)"
+elif ! diff -q <(awk '/^# ---- milestone-kit/{p=1} p{print} /^# ---- end milestone-kit/{p=0}' "$proj/.gitignore") "$kit/templates/gitignore.block" >/dev/null 2>&1; then
+  awk -v tpl="$kit/templates/gitignore.block" '
+    /^# ---- milestone-kit/ && !done { while ((getline l < tpl) > 0) print l; skip=1; done=1; next }
+    skip && /^# ---- end milestone-kit/ { skip=0; next }
+    !skip { print }' "$proj/.gitignore" > "$proj/.gitignore.tmp" && mv "$proj/.gitignore.tmp" "$proj/.gitignore"
+  echo "COPIED: .gitignore (milestone-kit block refreshed)"
 fi
 
 # skills: always into .claude/skills (the scripts resolve briefs.md and the session script

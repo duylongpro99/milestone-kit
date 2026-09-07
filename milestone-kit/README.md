@@ -102,7 +102,7 @@ After the merge, `scripts/milestone/journal <M> --recheck` from the root checkou
 | `scripts/milestone/` | `claim spawn brief wait status exit-check scope log-decision next driver-state journal`, shared parsers in `lib.sh`, project settings in `config` (written per project). Tests in `tests/`. |
 | `scripts/hooks/` | `guard-scope.sh` (write scope per worker session), `require-handoff.sh` (Stop hook), `guard-superpowers-paths.sh`. Wired by `templates/claude/settings.json` or `templates/codex/hooks.json`; the same scripts serve both agents. |
 | `scripts/sdd/` | Repo-local `sdd-workspace`, `task-brief`, `review-package` (superpowers subagent-driven-development, writing under `docs/sdd/`). |
-| `scripts/bootstrap/` | `install <repo> [--agent claude\|codex]` copies scripts and hooks, links skills, seeds templates; `check` prints per-stage `OK / MISSING / MALFORMED / PLACEHOLDER / OWNER / DRIFT / NOTE` lines and `READY` / `NOT READY`; `check --list` is the manifest. |
+| `scripts/bootstrap/` | `install <repo> [--agent claude\|codex]` copies scripts and hooks, links skills, seeds templates; `update [--commit]`, run from an installed project, refreshes it to the kit it was installed from in one command; `check` prints per-stage `OK / MISSING / MALFORMED / PLACEHOLDER / OWNER / DRIFT / NOTE` lines and `READY` / `NOT READY`; `check --list` is the manifest. |
 | `templates/` | `CLAUDE.md`, `docs/STATUS.md`, `docs/05-roadmap.md`, `docs/plans/README.md`, `docs/sdd/README.md`, `docs/journal/README.md`, `docs/adr/*`, `docs/spike-results.md`, `rules/component.md`, `claude/settings*.json`, `codex/hooks.json`, `AGENTS.md` (Codex), `gitignore.block`, `milestone.config`. `{{TOKEN}}` placeholders are the content decisions the bootstrap fills. |
 
 ### Scripts at a glance
@@ -212,6 +212,12 @@ my-app/
 
 ## Updating the kit
 
-Edit under `milestone-kit/` here, run `scripts/milestone/tests/*.sh`, then re-run `install <repo> --no-templates` per project. Skills are symlinks, so `SKILL.md` edits reach every project at once; scripts and hooks are copies and show as `DRIFT:` until refreshed. `scripts/milestone/config` is the project's and is never overwritten.
+Edit under `milestone-kit/` here, run `scripts/milestone/tests/*.sh`, then refresh each project in one command from its root:
+
+```bash
+scripts/bootstrap/update --commit          # a project installed before `update` existed: <kit>/scripts/bootstrap/update --commit
+```
+
+`update` finds the kit through the `.milestone-kit` stamp (`--kit PATH` overrides it), re-runs the kit's `install` (script and hook copies, skill links, the templates that do not exist yet, the `.gitignore` block between its markers, the stamp), prints the `check` lines that matter, and with `--commit` commits exactly what changed as one `[docs] refresh milestone-kit to <sha>` commit. Skills are symlinks, so `SKILL.md` edits reach every project at once; scripts and hooks are copies and show as `DRIFT:` until refreshed. `scripts/milestone/config`, `.claude/settings*.json` and every existing doc are never overwritten.
 
 Origin: extracted from `duylongpro99/gesture2browse` after its Phase 0 (first run of the driver).
