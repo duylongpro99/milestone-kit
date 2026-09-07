@@ -17,7 +17,7 @@ Two rules make this safe to hand to an agent:
 ## Preconditions
 
 1. `git rev-parse --is-inside-work-tree` succeeds in the target repo; the owner names the base branch (default: the current one).
-2. The kit is reachable: `scripts/bootstrap/install` exists in `milestone-kit/skills/milestone-kit/`. If the project already has `.milestone-kit`, this is a re-run: skip to **Loop** and start from the first non-OK line.
+2. The kit is reachable: `scripts/bootstrap/install` exists in the `milestone-kit/` directory of this repo. If the project already has `.milestone-kit`, this is a re-run: skip to **Loop** and start from the first non-OK line.
 3. The owner has given at least one of: an idea (a paragraph), `prd.md`, `architecture.md`. With none, stop and ask for the idea.
 
 ## Loop

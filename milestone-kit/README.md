@@ -112,7 +112,7 @@ The driver joins `exit-progress` with the script's own run of each check and rep
 
 ```bash
 # new or existing repo
-skills/milestone-kit/scripts/bootstrap/install ~/code/my-app
+milestone-kit/scripts/bootstrap/install ~/code/my-app
 cd ~/code/my-app && scripts/bootstrap/check          # NOT READY, with the list of what is missing
 # in Claude Code: "bootstrap this repo for milestones. Idea: <paragraph>"  (or: from docs/01-prd.md)
 # when check says READY, inside Herdr: "run 0A"      (driving-a-milestone)
@@ -196,6 +196,6 @@ my-app/
 
 ## Updating the kit
 
-Edit under `skills/milestone-kit/` here, run `scripts/milestone/tests/*.sh`, then re-run `install <repo> --no-templates` per project. Skills are symlinks, so `SKILL.md` edits reach every project at once; scripts and hooks are copies and show as `DRIFT:` until refreshed. `scripts/milestone/config` is the project's and is never overwritten.
+Edit under `milestone-kit/` here, run `scripts/milestone/tests/*.sh`, then re-run `install <repo> --no-templates` per project. Skills are symlinks, so `SKILL.md` edits reach every project at once; scripts and hooks are copies and show as `DRIFT:` until refreshed. `scripts/milestone/config` is the project's and is never overwritten.
 
 Origin: extracted from `duylongpro99/gesture2browse` after its Phase 0 (first run of the driver).

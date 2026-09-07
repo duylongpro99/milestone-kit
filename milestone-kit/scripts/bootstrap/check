@@ -190,6 +190,7 @@ else NOTE "spike-results — roadmap has no Gate column; docs/spike-results.md n
 # ---------------------------------------------------------------- stage 4: tooling
 stage "4 — tooling"
 kit=$(sed -n 's/^kit=//p' .milestone-kit 2>/dev/null); [ -n "$kit" ] || kit=$(cd "$here/../.." && pwd)
+[ -d "$kit/scripts" ] || NOTE "kit — .milestone-kit points at $kit, which has no scripts/ (kit moved?); re-run install from its new location to restamp and refresh the skill links"
 bad=""
 for f in claim spawn brief wait status exit-check scope log-decision next driver-state lib.sh; do [ -x "scripts/milestone/$f" ] || bad="$bad scripts/milestone/$f"; done
 for f in guard-scope.sh require-handoff.sh guard-superpowers-paths.sh; do [ -x "scripts/hooks/$f" ] || bad="$bad scripts/hooks/$f"; done

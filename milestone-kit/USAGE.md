@@ -19,7 +19,7 @@ mkdir my-app && cd my-app && git init -b main
 # optional: drop your docs in first
 mkdir -p docs && cp ~/prd.md docs/01-prd.md && cp ~/architecture.md docs/02-architecture.md
 
-~/personal/agent/milestone-kit/skills/milestone-kit/scripts/bootstrap/install .
+~/personal/agent/milestone-kit/milestone-kit/scripts/bootstrap/install .
 scripts/bootstrap/check            # NOT READY, with the list of what is missing
 ```
 
@@ -74,11 +74,11 @@ NEXT: READY|BLOCKED: <M> — …   verbatim from scripts/milestone/next --inputs
 Scripts and hooks are copies inside each project (hooks must exist in every clone, worktree and CI run). To ship a fix:
 
 ```bash
-# edit skills/milestone-kit/scripts/... in this repo, run its tests
-skills/milestone-kit/scripts/milestone/tests/guard-scope.sh
-skills/milestone-kit/scripts/milestone/tests/post-finish.sh
+# edit milestone-kit/scripts/... in this repo, run its tests
+milestone-kit/scripts/milestone/tests/guard-scope.sh
+milestone-kit/scripts/milestone/tests/post-finish.sh
 # then, per project
-skills/milestone-kit/scripts/bootstrap/install ~/code/my-app --no-templates
+milestone-kit/scripts/bootstrap/install ~/code/my-app --no-templates
 ```
 
 `config` (`scripts/milestone/config`) is the project's and is never overwritten. Skills are symlinks, so `SKILL.md` edits reach every project at once.
@@ -109,7 +109,7 @@ The scripts parse, they do not read. `templates/docs/plans/README.md` is the ref
 The driver is always a Claude Code session; the workers can be Codex. Everything the workers are held to (scope, handoff, superpowers paths) is enforced by the same three hook scripts, wired for Codex in `.codex/hooks.json` instead of `.claude/settings.json`.
 
 ```bash
-~/personal/agent/milestone-kit/skills/milestone-kit/scripts/bootstrap/install . --agent codex
+~/personal/agent/milestone-kit/milestone-kit/scripts/bootstrap/install . --agent codex
 scripts/bootstrap/check
 ```
 

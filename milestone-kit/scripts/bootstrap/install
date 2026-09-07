@@ -29,8 +29,8 @@ while [ $# -gt 0 ]; do
 done
 [ -d "$proj" ] || { echo "no such directory: $proj" >&2; exit 3; }
 proj=$(cd "$proj" && pwd)
-kit=$(cd "$(dirname "$0")/../.." && pwd)                 # skills/milestone-kit
-gck=$(cd "$kit/../.." && pwd)                              # repo root (skills/superpowers, skills/cc-session, skills/cx-session, link-superpowers-skills.sh)
+kit=$(cd "$(dirname "$0")/../.." && pwd)                 # <general-cc-kit>/milestone-kit
+gck=$(cd "$kit/.." && pwd)                                 # general-cc-kit (the kit sits at its root)
 git -C "$proj" rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "MANUAL: $proj is not a git repository; run git init first" ; exit 4; }
 
 copy_tree() { # $1 = kit subdir, $2 = project subdir, $3... = basenames never overwritten
