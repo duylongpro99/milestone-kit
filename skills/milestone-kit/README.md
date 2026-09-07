@@ -174,7 +174,7 @@ my-app/
 │   ├── settings.json                  the three hooks (Claude Code)
 │   ├── settings.local.json            yours, gitignored
 │   ├── rules/<component>.md           one per architecture §3 component
-│   ├── skills/                        symlinks into general-cc-kit
+│   ├── skills/                        symlinks into this repo (milestone-kit)
 │   └── scope.json                     per-worktree, written by spawn, gitignored
 ├── scripts/{milestone,hooks,sdd,bootstrap}/   kit copies; config is the project's
 ├── docs/
