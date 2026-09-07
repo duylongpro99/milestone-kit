@@ -2,7 +2,7 @@
 
 Everything a repository needs to run roadmap milestones with a Claude Code **driver** session and **worker** sessions on Claude Code or Codex, in one place, so a new project is prepared by a script and a checklist instead of by hand.
 
-Two skills, one loop. `bootstrapping-milestones` prepares a repo until `scripts/bootstrap/check` prints `READY`. `driving-a-milestone` then runs one milestone end to end: it spawns a worker session per role inside a git worktree, hands each one a self-contained brief, reads its handoff, and comes back to you only for decisions. Every step is gated by a script that parses documents, never by the agent's own judgment.
+Three skills, one loop. `bootstrapping-milestones` prepares a repo until `scripts/bootstrap/check` prints `READY`. `driving-a-milestone` then runs one milestone end to end: it spawns a worker session per role inside a git worktree, hands each one a self-contained brief, reads its handoff, and comes back to you only for decisions. `adding-a-milestone` puts a later feature idea on the roadmap of a prepared repo as one more row, so the same driver can run it. Every step is gated by a script that parses documents, never by the agent's own judgment.
 
 ## Why
 
@@ -46,11 +46,15 @@ drive       "run <M>" ─► claim ─► [plan] ─► [execute]* ─► [finis
                                      └── NEEDS-OWNER: relay, answer, same pane ──┘
 
 post-finish "merged" ─► next ─► log-decision --apply ─► READY: <next M>  ─► "run <next M>"
+
+feature     "idea: <paragraph>" ─► triage ─► [1 intent delta] ─► [2 roadmap row] ─► [3 status row] ─► [4 check + next] ─► "run <M>"
+                                     gate         gate                gate
 ```
 
 1. **Bootstrap** (`bootstrapping-milestones`). From an idea or an existing PRD and architecture doc, the agent works six stages in order, re-running `check` after each. Content stages end at a gate where you approve the goal and component list, the rule files, and the milestone list with its exit criteria. `check` refuses `READY` while any `{{TOKEN}}` remains.
 2. **Drive** (`driving-a-milestone`). "run 0A" claims the STATUS row, creates `.worktrees/0A` on branch `0A`, and runs roles in order. Between roles the driver reads `status` and `exit-check`, and acts on their printed verdict lines only.
 3. **Post-finish.** After the PR merges, `next` reports the drafted §8 decision and every unstarted milestone as `READY:` or `BLOCKED:` with the missing input named. `log-decision --apply` writes the §8 row and retires the STATUS row as one `[docs]` commit. You start the next milestone with "run <M>".
+4. **Feature idea** (`adding-a-milestone`). On a prepared repo, a new feature is a late-bound milestone, not a new bootstrap. The agent first asks whether it is a milestone, a task for an active milestone's plan, or plain work outside the kit. For a milestone it appends a PRD section (and an architecture delta only when a component or interface changes), adds one roadmap row with Plan inputs and Exit criteria, one `unclaimed` STATUS row, and verifies with `check --milestone <M>` and `next --inputs <M>`. You approve the deltas and the row; then "run <M>".
 
 ## Roles
 
@@ -86,6 +90,7 @@ The driver joins `exit-progress` with the script's own run of each check and rep
 | Part | What |
 |---|---|
 | `skills/bootstrapping-milestones/` | Prepares a repo from an idea or a PRD/architecture doc, stage by stage, until `scripts/bootstrap/check` prints `READY`. |
+| `skills/adding-a-milestone/` | Turns a feature idea on a prepared repo into one roadmap milestone: triage, PRD and architecture deltas, the roadmap row, the STATUS row, verified by `check --milestone <M>` and `next --inputs <M>`. Never re-bootstraps, never starts the milestone. |
 | `skills/driving-a-milestone/` | Drives one milestone: spawns one worker session per role (plan, execute, finish, probe, audit) in the milestone worktree, relays owner gates. Needs Herdr and the kit's `cc-session` skill (linked into the project as `.claude/skills/cris-managed-session`). `references/briefs.md` holds the brief templates and the handoff format. |
 | `scripts/milestone/` | `claim spawn brief wait status exit-check scope log-decision next driver-state`, shared parsers in `lib.sh`, project settings in `config` (written per project). Tests in `tests/`. |
 | `scripts/hooks/` | `guard-scope.sh` (write scope per worker session), `require-handoff.sh` (Stop hook), `guard-superpowers-paths.sh`. Wired by `templates/claude/settings.json` or `templates/codex/hooks.json`; the same scripts serve both agents. |
@@ -117,11 +122,12 @@ cd ~/code/my-app && scripts/bootstrap/check          # NOT READY, with the list 
 # in Claude Code: "bootstrap this repo for milestones. Idea: <paragraph>"  (or: from docs/01-prd.md)
 # when check says READY, inside Herdr: "run 0A"      (driving-a-milestone)
 # after the PR merges: "merged"                        # logs §8, prints READY: for the next milestones
+# later, a feature idea: "add to the roadmap: <paragraph>"   (adding-a-milestone) → "run <M>"
 ```
 
 `install` is idempotent and never overwrites `scripts/milestone/config`, `.claude/settings.json`, `.claude/settings.local.json`, or any doc that already exists. It prints one line per action (`COPIED: KEPT: LINKED: SEEDED: MANUAL: STAMP:`) and stamps `.milestone-kit` with the kit path and commit so `check` can report drift.
 
-Scripts and hooks are **copied** into the project (hooks must exist in every clone and worktree; CI too); skills are **symlinked** into `.claude/skills/` (`bootstrapping-milestones`, `driving-a-milestone`, `cris-managed-session`, and the superpowers skills as `obra-<name>`). `check` prints `DRIFT:` when a copy differs from the kit: fix the kit, re-run `install`.
+Scripts and hooks are **copied** into the project (hooks must exist in every clone and worktree; CI too); skills are **symlinked** into `.claude/skills/` (`bootstrapping-milestones`, `adding-a-milestone`, `driving-a-milestone`, `cris-managed-session`, and the superpowers skills as `obra-<name>`). `check` prints `DRIFT:` when a copy differs from the kit: fix the kit, re-run `install`.
 
 ### Requirements
 
@@ -129,7 +135,7 @@ Scripts and hooks are **copied** into the project (hooks must exist in every clo
 - Herdr running with `HERDR_ENV=1`, for the driver to spawn worker panes.
 - This repository (`milestone-kit`) checked out with the `skills/superpowers` submodule initialised (`git submodule update --init`), since skills are symlinked from here.
 - Your own `.claude/settings.local.json` in the project root: the permission allowlist for git, gh, and the project's build and test tools. The agent never writes it; without it every worker commit is a permission dialog.
-- Optional: Codex 0.145 or later with `features.hooks` and `features.skills` on, to run the workers on Codex (`install <repo> --agent codex`; `USAGE.md §8`). The driver is always Claude Code.
+- Optional: Codex 0.145 or later with `features.hooks` and `features.skills` on, to run the workers on Codex (`install <repo> --agent codex`; `USAGE.md §9`). The driver is always Claude Code.
 
 ## Guarantees
 
@@ -159,7 +165,7 @@ The agent stops and asks at each of these. It never proxies your answer.
 
 ## Contracts the documents must keep
 
-`scripts/milestone/lib.sh` holds the only parsers for `docs/STATUS.md` rows, roadmap milestone rows, roadmap §8, the `### x.y Milestone` heading, and `.impl.md` task headings. `check` validates with them, so a document `check` accepts is a document `claim`, `next`, `brief`, `scope` can read. Formats a project must keep: `templates/docs/plans/README.md` (five questions, `## Status` with the blockquoted §8 row, `## Exit checks` table), the roadmap heading and cell names, the STATUS row shape, `**Files:**` blocks in `.impl.md`, the handoff format in `skills/driving-a-milestone/references/briefs.md`. The short list with examples is in `USAGE.md §6`.
+`scripts/milestone/lib.sh` holds the only parsers for `docs/STATUS.md` rows, roadmap milestone rows, roadmap §8, the `### x.y Milestone` heading, and `.impl.md` task headings. `check` validates with them, so a document `check` accepts is a document `claim`, `next`, `brief`, `scope` can read. Formats a project must keep: `templates/docs/plans/README.md` (five questions, `## Status` with the blockquoted §8 row, `## Exit checks` table), the roadmap heading and cell names, the STATUS row shape, `**Files:**` blocks in `.impl.md`, the handoff format in `skills/driving-a-milestone/references/briefs.md`. The short list with examples is in `USAGE.md §7`.
 
 ## Project layout after bootstrap and a first milestone
 

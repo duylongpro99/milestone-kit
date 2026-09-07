@@ -99,6 +99,7 @@ if [ $skills = 1 ]; then
     mkdir -p "$proj/$d"
     link "$d" driving-a-milestone "$kit/skills/driving-a-milestone"
     link "$d" bootstrapping-milestones "$kit/skills/bootstrapping-milestones"
+    link "$d" adding-a-milestone "$kit/skills/adding-a-milestone"
     link "$d" cris-managed-session "$gck/skills/$session_skill"
     if [ -x "$gck/link-superpowers-skills.sh" ]; then
       "$gck/link-superpowers-skills.sh" "$proj" --prefix obra --dest-subdir "$d" | sed "s|^linked |LINKED: $d/|" | grep -v '^$' || true

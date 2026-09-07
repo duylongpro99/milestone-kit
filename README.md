@@ -29,7 +29,7 @@ milestone-kit/                       this repo
 ├── milestone-kit/                   the kit (not a skill folder itself)
 │   ├── README.md                    design, guarantees, roles, owner gates
 │   ├── USAGE.md                     operator guide: bootstrap, drive, post-finish, Codex (§8)
-│   ├── skills/{bootstrapping-milestones,driving-a-milestone}/SKILL.md
+│   ├── skills/{bootstrapping-milestones,adding-a-milestone,driving-a-milestone}/SKILL.md
 │   ├── scripts/{bootstrap,milestone,hooks,sdd}/   copied into each project by install
 │   └── templates/                   CLAUDE.md, AGENTS.md, settings, hooks.json, docs seeds
 └── skills/                          one folder per skill
@@ -41,6 +41,7 @@ milestone-kit/                       this repo
 | Path | What | Linked into a project as |
 |---|---|---|
 | `milestone-kit/skills/bootstrapping-milestones/` | Prepares a repo from an idea or a PRD/architecture doc, stage by stage, until `scripts/bootstrap/check` prints `READY` | `.claude/skills/bootstrapping-milestones` |
+| `milestone-kit/skills/adding-a-milestone/` | Turns a feature idea on a prepared repo into one roadmap milestone: triage, PRD and architecture deltas, one roadmap row, one STATUS row, verified by `check --milestone <M>` and `next --inputs <M>`. Never re-bootstraps, never starts the milestone | `.claude/skills/adding-a-milestone` |
 | `milestone-kit/skills/driving-a-milestone/` | Drives one milestone: claims it, spawns a worker per role in the worktree, relays owner gates, logs the roadmap §8 row after merge | `.claude/skills/driving-a-milestone` |
 | `milestone-kit/scripts/` | `bootstrap/{install,check}`, `milestone/{claim,spawn,brief,wait,status,exit-check,scope,next,log-decision,driver-state,lib.sh}`, `hooks/{guard-scope,require-handoff,guard-superpowers-paths}.sh`, `sdd/*` | copied to `scripts/` (hooks must exist in every clone and worktree) |
 | `milestone-kit/templates/` | `CLAUDE.md`, `docs/*` seeds, `claude/settings*.json`, `codex/hooks.json`, `AGENTS.md`, `gitignore.block`, `milestone.config`; `{{TOKEN}}` placeholders are the content decisions the bootstrap fills | seeded once, never overwritten |
@@ -63,12 +64,13 @@ Then:
 in Claude Code:  "bootstrap this repo for milestones. Idea: <paragraph>"   until check prints READY
 inside Herdr:    "run 0A"        driving-a-milestone claims, spawns plan -> execute -> finish, relays owner gates
 after PR merge:  "merged"        logs the roadmap §8 row, prints READY: for the next milestones
+new feature:     "add to the roadmap: <paragraph>"   adding-a-milestone: triage, PRD delta, one roadmap row, then "run <M>"
 ```
 
 What `install <project> [--no-skills] [--no-templates] [--agent claude|codex]` does:
 
 - Copies `scripts/{milestone,hooks,sdd,bootstrap}` into the project and refreshes them on every run; `check` prints `DRIFT:` when a copy differs from the kit.
-- Links skills into `.claude/skills/`: `bootstrapping-milestones`, `driving-a-milestone`, the session skill as `cris-managed-session`, and the superpowers skills as `obra-<name>` via `link-superpowers-skills.sh`.
+- Links skills into `.claude/skills/`: `bootstrapping-milestones`, `adding-a-milestone`, `driving-a-milestone`, the session skill as `cris-managed-session`, and the superpowers skills as `obra-<name>` via `link-superpowers-skills.sh`.
 - Seeds `.claude/settings.json` with the three hooks, appends the `.gitignore` block, seeds docs from `templates/`.
 - With `--agent codex`: also seeds `.codex/hooks.json` and `AGENTS.md`, repeats the skill links under `.agents/skills/` (the only place Codex looks), links `cx-session` instead of `cc-session`, and records `MS_AGENT=codex` in `scripts/milestone/config`.
 - Stamps `.milestone-kit` with the kit path and commit. Idempotent; never overwrites `scripts/milestone/config`, `.claude/settings.json`, `.claude/settings.local.json`, or an existing doc. Prints one line per action: `COPIED: KEPT: LINKED: SEEDED: MANUAL: CONFIG: STAMP:`.

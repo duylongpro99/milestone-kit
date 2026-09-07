@@ -44,7 +44,25 @@ When `check` ends with `summary: … | READY` and `NEXT: READY: 0A`, the repo is
 
 Same as above. `install` never overwrites an existing file: your `CLAUDE.md`, `docs/`, `.claude/settings.json` stay; `check` tells you which sections or rows are missing (`MALFORMED:` lines name the heading or cell). If `.claude/settings.json` already exists, `install` prints a `MANUAL:` line for each hook you have to merge from `templates/claude/settings.json`.
 
-## 3. Running a milestone
+## 3. Feature idea on a prepared project
+
+Once `check` says `READY`, a new feature does not go through bootstrap again. Open Claude Code on the base branch and say:
+
+> add to the roadmap: <one paragraph about the feature>
+
+The agent (`adding-a-milestone`) first asks which of three things it is:
+
+| Outcome | You do |
+|---|---|
+| a **milestone** (crosses a component, adds or changes a shared interface, needs its own plan and exit criteria) | approve the PRD section (and an architecture delta if a component or interface changes), then the roadmap row: id, Plan inputs, Exit criteria, pending §8 rows |
+| a **task in an active milestone** | add a task with a `**Files:**` block to that plan's `.impl.md` in its worktree; the next `execute` spawn picks it up |
+| **not kit work** (one component, a couple of files) | a plain session on a branch |
+
+For a milestone the agent appends to `docs/01-prd.md`, adds one `### x.y Milestone <M> — …` row to `docs/05-roadmap.md` (and the §2.2 phase-map entry), one `unclaimed` row to `docs/STATUS.md`, then runs `scripts/bootstrap/check --milestone <M>` and `scripts/milestone/next --inputs <M>`. It stops at the `READY: <M>` or `BLOCKED: <M>` line and commits only when you say "commit". Then "run <M>".
+
+Ids: the next unused letter in the phase the feature extends (`1C`), a `.n` suffix for a slice of an unplanned milestone (`1D.1`), or a new phase digit (`2A`) in `## 5.`/`## 6.` of the roadmap. Plan inputs are read by `next` word by word: a milestone id resolves against merged branches, `G<n>` against §8, anything naming a doc as present, anything else as `(OWNER)`.
+
+## 4. Running a milestone
 
 Inside Herdr (`echo $HERDR_ENV` → `1`), open Claude Code in the repo root on the base branch with a clean tree, and say:
 
@@ -54,7 +72,7 @@ The driver (`driving-a-milestone`) claims the STATUS row, creates `.worktrees/0A
 
 After the PR merges: "merged" → the driver logs §8 and prints `READY:` / `BLOCKED:` for the next milestones. You start the next one with "run <M>".
 
-## 4. Reading `check`
+## 5. Reading `check`
 
 ```
 OK: <id> — …            done
@@ -69,7 +87,7 @@ NEXT: READY|BLOCKED: <M> — …   verbatim from scripts/milestone/next --inputs
 
 `check --list` prints the manifest (every check, its stage, who fills it). `check --milestone 1B` targets a later milestone. `check --no-tests` skips the kit's self-tests.
 
-## 5. Updating the kit
+## 6. Updating the kit
 
 Scripts and hooks are copies inside each project (hooks must exist in every clone, worktree and CI run). To ship a fix:
 
@@ -83,7 +101,7 @@ milestone-kit/scripts/bootstrap/install ~/code/my-app --no-templates
 
 `config` (`scripts/milestone/config`) is the project's and is never overwritten. Skills are symlinks, so `SKILL.md` edits reach every project at once.
 
-## 6. Formats the documents must keep
+## 7. Formats the documents must keep
 
 The scripts parse, they do not read. `templates/docs/plans/README.md` is the reference; the short list:
 
@@ -93,7 +111,7 @@ The scripts parse, they do not read. `templates/docs/plans/README.md` is the ref
 - `docs/plans/<slug>.impl.md`: `### Task N: title` with a `**Files:**` block of `- Create:/Modify:/Test:` bullets and backticked paths.
 - `docs/sdd/<M>/handoff.md`: the block in `skills/driving-a-milestone/references/briefs.md`.
 
-## 7. Troubleshooting
+## 8. Troubleshooting
 
 | Symptom | Cause / fix |
 |---|---|
@@ -104,7 +122,7 @@ The scripts parse, they do not read. `templates/docs/plans/README.md` is the ref
 | every worker commit asks for permission | `.claude/settings.local.json` missing in the root checkout |
 | `lock: TAMPERED` | `## Exit checks` or a contract test changed after freeze: re-plan, or the owner says "accept" → `--refreeze` |
 
-## 8. Workers on Codex
+## 9. Workers on Codex
 
 The driver is always a Claude Code session; the workers can be Codex. Everything the workers are held to (scope, handoff, superpowers paths) is enforced by the same three hook scripts, wired for Codex in `.codex/hooks.json` instead of `.claude/settings.json`.
 

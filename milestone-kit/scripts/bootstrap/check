@@ -54,7 +54,7 @@ stage  id                  artifact                                           fi
 4      settings            hooks file for MS_AGENT (.claude/settings.json | .codex/hooks.json) wires the three hooks   install / owner merges
 4      agents-md           AGENTS.md (MS_AGENT=codex only; templates/AGENTS.md, points Codex at CLAUDE.md and the rule files)   install
 4      gitignore           .gitignore has the milestone-kit block             install
-4      skills              .claude/skills (and .agents/skills for codex): driving-a-milestone, cris-managed-session, obra-* the briefs name   install
+4      skills              .claude/skills (and .agents/skills for codex): driving-a-milestone, cris-managed-session, obra-* the briefs name (bootstrapping-milestones, adding-a-milestone linked too)   install
 4      tools               git, jq, gh on PATH; the MS_AGENT CLI and herdr (OWNER when absent)   owner
 4      local-settings      .claude/settings.local.json allowlist (claude; NOTE for codex)   owner
 4      tests               scripts/milestone/tests/*.sh pass                  kit
