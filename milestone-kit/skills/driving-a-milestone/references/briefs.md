@@ -16,7 +16,9 @@ Start with `docs/STATUS.md`, then only what `CLAUDE.md §0` lists for this task,
 
 **Scope.** Your writes are limited to the paths in `.claude/scope.json` (read it once; `allow` globs, `deny` globs, and for `execute` the `tasks` you own). A hook denies everything else and blocks after a command that left changes outside them. A denial is not an obstacle to route around: if the task truly needs that path, stop and hand off `NEEDS-OWNER` with one `owner-questions` line per path, `path — reason`. Never edit `.claude/scope.json`, `.claude/settings*.json`, `scripts/hooks/`, the spec or the impl plan; `git add` explicit paths only; no `git stash`, `checkout <ref>`, `reset`, `rebase`.
 
-**Commit before every handoff**, whatever the outcome. Every commit belongs to exactly one task: `git add {its paths}`, body first line `[{component}] task {N}: {task title}` (`[docs]` for the session-end writes, which are their own commit). The session-end commit stages exactly the files you rewrote: `docs/STATUS.md`, `docs/plans/<SLUG>.md`, `docs/journal/YYYY-MM-DD-<M>.md` (plus `docs/sdd/<M>/progress.md` or `docs/spike-results.md` when your role changed them). `docs/sdd/<M>/handoff.md` is gitignored, like every other `docs/sdd/<M>/` file except `progress.md`: never `git add` it (git refuses and aborts the rest of the line); the driver reads it from the worktree. Never `git push --force`, never merge, never edit roadmap §8.
+**Commit before every handoff**, whatever the outcome. Every commit belongs to exactly one task: `git add {its paths}`, body first line `[{component}] task {N}: {task title}` (`[docs]` for the session-end writes, which are their own commit). Never `git push --force`, never merge, never edit roadmap §8.
+
+**Session end, in this order** (the hook will not let you stop without step 3): (1) rewrite your `docs/STATUS.md` row and the plan `## Status` (`CLAUDE.md §0`); (2) run `scripts/milestone/exit-check <M> --fast` and grade from it; (3) write `docs/sdd/<M>/handoff.md` (below); (4) run `scripts/milestone/journal <M>`: it rewrites `docs/journal/<SLUG>.md`, the milestone's tracked record, from git, the plan's `## Exit checks`, the exit-check results and your handoff; you never edit that file except its `### Owner steps` and `## Notes` blocks, which it keeps; (5) one `[docs]` commit staging exactly `docs/STATUS.md`, `docs/plans/<SLUG>.md`, `docs/journal/<SLUG>.md` (plus `docs/sdd/<M>/progress.md` or `docs/spike-results.md` when your role changed them); (6) end your turn. `docs/sdd/<M>/handoff.md` is gitignored, like every other `docs/sdd/<M>/` file except `progress.md`: never `git add` it (git refuses and aborts the rest of the line); the driver reads it from the worktree.
 
 **Handoff (required, every time you stop).** Write `docs/sdd/<M>/handoff.md` exactly:
 
@@ -32,7 +34,7 @@ Start with `docs/STATUS.md`, then only what `CLAUDE.md §0` lists for this task,
     - {one exit criterion of the roadmap row, verbatim} → met | not yet | at risk: {why, one clause}
     next: {one sentence: what the next session does first}
 
-`owner-questions` only for NEEDS-OWNER; `evidence` only for DONE or BLOCKED; `exit-progress` required on CONTINUE and DONE, one line per criterion in the row's **Exit** cell plus one per item in **Interfaces fixed here** (an interface is "met" only when its downstream consumer named in the row could use it as is). Once `docs/plans/<SLUG>.md` has a `## Exit checks` table, each line quotes that table's **Criterion** cell verbatim (the driver joins on it) and a criterion is `met` only when its check passes in `scripts/milestone/exit-check <M> --fast`; before the table exists, quote the roadmap cells. `at risk` means the work so far satisfies the task but not the milestone; say why, do not fix it silently. Before a CONTINUE or DONE handoff also do the `CLAUDE.md §0` session-end writes: rewrite your `docs/STATUS.md` row and the plan `## Status`; add an entry to today's `docs/journal/YYYY-MM-DD-<M>.md`.
+`owner-questions` only for NEEDS-OWNER; `evidence` only for DONE or BLOCKED; `exit-progress` required on CONTINUE and DONE, one line per criterion in the row's **Exit** cell plus one per item in **Interfaces fixed here** (an interface is "met" only when its downstream consumer named in the row could use it as is). Once `docs/plans/<SLUG>.md` has a `## Exit checks` table, each line quotes that table's **Criterion** cell verbatim (the driver joins on it) and a criterion is `met` only when its check passes in `scripts/milestone/exit-check <M> --fast`; before the table exists, quote the roadmap cells. `at risk` means the work so far satisfies the task but not the milestone; say why, do not fix it silently. An `owner` row is `met` only after the owner confirmed it; until then it is `not yet`, and its steps must be in the journal (execute step 4).
 
 **Previous session said:** <previous handoff `next`, or "none: first session">
 ```
@@ -65,7 +67,7 @@ Advance `docs/plans/<SLUG>.impl.md` with `obra-subagent-driven-development`.
 1. Read `docs/sdd/<M>/progress.md` and the plan `## Status`; start at the first unfinished task.
 2. Complete **at most 2 tasks** this session: the ones listed under `tasks` in `.claude/scope.json` (spec review, code review, boundary gate against the rule file). Files of any other task are denied. One commit per task (`[{component}] task {N}: …`); the SDD fix rounds of a task may add commits with the same task line. Then hand off `CONTINUE`, or `DONE` when no task remains. A file the task needs but the scope lacks → `NEEDS-OWNER`, `path — reason`; never restructure the task to avoid the path.
 3. A task that needs a rule deviation: draft the ADR under `docs/adr/`, finish tasks that do not depend on it, hand off `NEEDS-OWNER` with the ADR path. Never merge the ADR yourself.
-4. A task whose roadmap verification names the owner: do the agent-side verification, then `NEEDS-OWNER` with the exact steps the owner runs.
+4. A task whose roadmap verification names the owner (an `owner` row of `## Exit checks`): do the agent-side verification, then write the steps the owner runs into `docs/journal/<SLUG>.md` under `### Owner steps` as one block per row: a line `**E<n> — <criterion verbatim>**`, the numbered steps, a line starting `Expected:`. Run `scripts/milestone/journal <M>` (it keeps the block), commit, then `NEEDS-OWNER` with one `owner-questions` line pointing at the block. The steps live in the journal, not in the handoff: the owner re-runs them after the merge without this session. `exit-check` reads the row as `OWNER (no steps in …)` until the block exists.
 5. A threshold or tunable change: the failing test is the kind `docs/plans/README.md §Superpowers` names for it.
 6. Ask via `NEEDS-OWNER` only for real decisions; routine calls are yours (`CLAUDE.md §1` five questions decide).
 ```
@@ -78,8 +80,8 @@ Close milestone <M>: verify, finish the branch, open the PR to `<BASE>`.
 
 ## Steps
 1. `obra-verification-before-completion` = the `CLAUDE.md §5` commands. When the row's exit says "from a clean clone", clone into `$TMPDIR` and run there. Then `scripts/milestone/exit-check <M>` (full; it clones for `clean-clone` rows) and put its `summary:` line in `evidence`. Any `FAIL` or `TAMPERED` → `BLOCKED` with the row and its tail lines; this role never fixes a failing check and never edits `## Exit checks` or a contract test.
-2. `obra-finishing-a-development-branch`: check each exit criterion of the roadmap row, rewrite the STATUS row and plan `## Status`, list proposed §8 decisions under `## Status` as a paragraph headed `**Proposed decision(s) for roadmap §8 (owner logs; agent does not edit §8):**` whose first line after the heading is one complete §8 table row in a blockquote, `> | <YYYY-MM-DD> | <decision> | <input: the gate and milestone, e.g. G5 (0D): …> | <result> |` (`scripts/milestone/log-decision` applies exactly that row on the owner's approval; a bullet list cannot be applied), open a PR to `<BASE>` with `gh`. Never merge.
-3. `outcome: DONE` with the PR URL and one `evidence` line per exit criterion; a failing check → `BLOCKED` with the failing output in `evidence`. Your scope holds no code paths: you cannot fix a check, and must not try.
+2. `obra-finishing-a-development-branch`: check each exit criterion of the roadmap row, rewrite the STATUS row and plan `## Status`, list proposed §8 decisions under `## Status` as a paragraph headed `**Proposed decision(s) for roadmap §8 (owner logs; agent does not edit §8):**` whose first line after the heading is one complete §8 table row in a blockquote, `> | <YYYY-MM-DD> | <decision> | <input: the gate and milestone, e.g. G5 (0D): …> | <result> |` (`scripts/milestone/log-decision` applies exactly that row on the owner's approval; a bullet list cannot be applied), commit, push, open a PR to `<BASE>` with `gh`. Never merge.
+3. Write the handoff (`outcome: DONE`, the PR URL, one `evidence` line per exit criterion, the exit-check `summary:` line), then `scripts/milestone/journal <M>`: with the PR open and the full exit-check run done, the journal's header gets the PR URL, its Verification table the results, its Runs a dated line. Every `owner` row must have its block under `### Owner steps` (the execute sessions wrote them; `JOURNAL=… owner-steps a/b` with `a < b` is not `DONE`). Commit `docs/journal/<SLUG>.md` as `[docs] journal <M>`, push. A failing check → `BLOCKED` with the failing output in `evidence`. Your scope holds no code paths: you cannot fix a check, and must not try.
 ```
 
 ## Role `probe` (gate milestones: a roadmap row with a Gate cell)
@@ -113,6 +115,18 @@ Grade milestone <M> against its frozen intent, independently of the sessions tha
 
 ```
 Your handoff's exit-progress does not join with `## Exit checks` in docs/plans/<SLUG>.md: <MISSING rows / UNMATCHED lines>. Rewrite docs/sdd/<M>/handoff.md with one line per table row, Criterion cell verbatim, grade met | not yet | at risk; change nothing else.
+```
+
+## Journal message (driver → same pane, one line; on `JOURNAL=missing` or `JOURNAL=stale`)
+
+```
+Your session-end writes are incomplete: <the JOURNAL= line>. From the worktree root run scripts/milestone/journal <M>, commit docs/journal/<SLUG>.md as `[docs] journal <M>`, rewrite docs/sdd/<M>/handoff.md; change nothing else.
+```
+
+## Owner-steps message (driver → same pane, one line; on `owner-steps a/b` with `a < b` at execute DONE or finish)
+
+```
+`## Exit checks` row(s) <ids> are kind owner and docs/journal/<SLUG>.md has no `**<id> — …**` block for them under ### Owner steps. Write the numbered steps the owner runs and an `Expected:` line per row, run scripts/milestone/journal <M>, commit the journal as `[docs]`, rewrite handoff.md; change nothing else.
 ```
 
 ## Previous answers (append when resuming a NEEDS-OWNER in a new pane)

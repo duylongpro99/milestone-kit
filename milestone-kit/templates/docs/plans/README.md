@@ -53,7 +53,8 @@ The roadmap row's **Exit** cell and **Interfaces fixed here** cell, turned into 
 ```
 
 - `E` rows: one per criterion in the Exit cell (split at `;`). `I` rows: one per item in Interfaces fixed here; `consumer:` names only milestones that cell says consume it.
-- Kinds: `mechanical` runs in the worktree; `clean-clone` runs in a fresh `git clone` of the branch (`--fast` runs it in the worktree); `consumer:<M>` is a contract test written from the consumer's side and frozen with the table; `owner` has no command.
+- Kinds: `mechanical` runs in the worktree; `clean-clone` runs in a fresh `git clone` of the branch (`--fast` runs it in the worktree); `consumer:<M>` is a contract test written from the consumer's side and frozen with the table; `owner` has no command: the numbered steps the owner runs live in `docs/journal/<milestone>.md § Owner steps` (written by the execute session that reaches the row), so the owner can re-run them after the merge.
+- The table is copied into `docs/journal/<milestone>.md § Verification` with a "Last result" column by `scripts/milestone/journal`; after the merge `scripts/milestone/journal <M> --recheck` re-runs it from the base branch.
 - A contract test asserts what the consumer's roadmap row needs from the shape, through the owning package's public export (`package.json` `exports`, no deep imports). It fails until execute makes it pass; execute never edits it.
 - Commands start with `pnpm`, `npx`, `node`, `turbo`, `tsc`, `vitest`, `playwright`, `bash`, `sh`, `test` or `scripts/`; anything else is `REFUSED`. No `|` inside a cell. The Criterion cell is the join key: `exit-progress` lines quote it verbatim.
 

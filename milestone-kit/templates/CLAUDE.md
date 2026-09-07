@@ -18,7 +18,7 @@ Start every session with `docs/STATUS.md` (one page: phase, milestone, plan, nex
 
 Never read at start: `docs/journal/`, `docs/sdd/` (except your own ledger), `05-roadmap`, past ADRs. One fact from a big doc → a read-only subagent, keep the conclusion.
 
-**Writes.** Top-level session only, at session end: rewrite (never append) your row in `docs/STATUS.md` and `## Status` in `docs/plans/<milestone>.md`; history goes to `docs/journal/YYYY-MM-DD-<milestone>.md`. Subagents write only their own `task-N-report.md`. One session per milestone, in its own worktree, after claiming its STATUS row. Roadmap §8 and the STATUS Project section are owner-only; the one exception is the `driving-a-milestone` driver running `scripts/milestone/log-decision --apply` on the owner's recorded approval, which logs a merged milestone's drafted §8 row and removes its STATUS row (§6).
+**Writes.** Top-level session only, at session end: rewrite (never append) your row in `docs/STATUS.md` and `## Status` in `docs/plans/<milestone>.md`; the milestone's record is `docs/journal/<milestone>.md`, rewritten by `scripts/milestone/journal <M>` from git, the plan and your handoff (you write only its `### Owner steps` and `## Notes`; `docs/journal/README.md`). Subagents write only their own `task-N-report.md`. One session per milestone, in its own worktree, after claiming its STATUS row. Roadmap §8 and the STATUS Project section are owner-only; the one exception is the `driving-a-milestone` driver running `scripts/milestone/log-decision --apply` on the owner's recorded approval, which logs a merged milestone's drafted §8 row and removes its STATUS row (§6).
 
 ## 1. Plan before code
 

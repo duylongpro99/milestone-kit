@@ -46,6 +46,7 @@ drive       "run <M>" ─► claim ─► [plan] ─► [execute]* ─► [finis
                                      └── NEEDS-OWNER: relay, answer, same pane ──┘
 
 post-finish "merged" ─► next ─► log-decision --apply ─► READY: <next M>  ─► "run <next M>"
+                                                         └─ any time later: journal <M> --recheck
 
 feature     "idea: <paragraph>" ─► triage ─► [1 intent delta] ─► [2 roadmap row] ─► [3 status row] ─► [4 check + next] ─► "run <M>"
                                      gate         gate                gate
@@ -64,11 +65,11 @@ Each role is one worker session with its own brief, scope, and handoff. `spawn` 
 |---|---|---|
 | `plan` | `docs/plans/<slug>.spec.md`, `.impl.md`, `.md` with the `## Exit checks` table, the consumer-side contract tests, the SDD workspace | `docs/**` and the contract-test globs (`MS_CONTRACT_GLOBS`) |
 | `execute` | Advances the impl plan task by task with superpowers subagent-driven-development; repeats while `CONTINUE` | the `**Files:**` paths of the next ≤2 unfinished tasks, `docs/adr/**`, the lockfile; contract tests denied |
-| `finish` | Verifies, finishes the branch, opens the PR to the base branch | nothing else: it cannot fix a failing check, and must not try |
+| `finish` | Verifies with the full exit-check run, finishes the branch, opens the PR to the base branch, records the run and the PR in the journal | nothing else: it cannot fix a failing check, and must not try |
 | `probe` | Gate milestones only: short plan, spike, agent-side verification, results in `docs/spike-results.md` | the probe plan's `**Files:**` paths, `docs/spike-results.md`, `docs/adr/**`, the lockfile |
 | `audit` | Owner-invoked only: an independent `exit-progress` grade against the frozen exit checks | `docs/sdd/<M>/handoff.md` only |
 
-Common paths for every role are the session-end writes: the `docs/STATUS.md` row, `docs/journal/**`, `docs/sdd/<M>/**`, and the plan's `docs/plans/<slug>.md`. `.claude/scope.json`, `.claude/settings*.json`, `scripts/hooks/`, the spec and the impl plan are denied to every worker.
+Common paths for every role are the session-end writes: the `docs/STATUS.md` row, `docs/journal/**` (the milestone's record, rewritten by `scripts/milestone/journal`; the worker hand-writes only its Owner steps and Notes), `docs/sdd/<M>/**`, and the plan's `docs/plans/<slug>.md`. `.claude/scope.json`, `.claude/settings*.json`, `scripts/hooks/`, the spec and the impl plan are denied to every worker.
 
 Every worker ends its turn by writing `docs/sdd/<M>/handoff.md`:
 
@@ -85,6 +86,12 @@ next: what the next session does first
 
 The driver joins `exit-progress` with the script's own run of each check and reports `AGREE` or `DISAGREE` per row. A `DISAGREE`, an `at risk`, a `TAMPERED` lock, or an out-of-scope path is never resolved by the driver: it becomes a question to you.
 
+### The journal: what outlives the worktree
+
+Handoffs, exit-check reports and driver state are gitignored scratch under `docs/sdd/<M>/`; they die with the worktree. The record that stays is `docs/journal/<slug>.md`, one file per milestone, tracked on the milestone branch and merged with the PR (`templates/docs/journal/README.md`). `scripts/milestone/journal <M>` rewrites it at every session end from facts: the header (plan, branch, PR), `## Verification` (the frozen `## Exit checks` rows with a "Last result" column from the latest exit-check run), `## Implemented` (every commit grouped by its `[component] task N` line, with files), `## Sessions` (one row per handoff), `## Decisions` (the proposed §8 row, ADRs). The worker hand-writes two blocks the script keeps: `### Owner steps`, one `**E<n> — <criterion>**` block of numbered steps and an `Expected:` line per `owner` check, and `## Notes`. `status` reports `JOURNAL=ok|stale|missing (… owner-steps a/b)` and the driver does not move past a handoff without `ok`, nor call execute or finish `DONE` while owner steps are missing.
+
+After the merge, `scripts/milestone/journal <M> --recheck` from the root checkout re-runs the Verification table, updates the column and appends a dated Runs line, with no worktree and no session. The `owner` rows are yours to walk through from Owner steps.
+
 ## What is in the kit
 
 | Part | What |
@@ -92,11 +99,11 @@ The driver joins `exit-progress` with the script's own run of each check and rep
 | `skills/bootstrapping-milestones/` | Prepares a repo from an idea or a PRD/architecture doc, stage by stage, until `scripts/bootstrap/check` prints `READY`. |
 | `skills/adding-a-milestone/` | Turns a feature idea on a prepared repo into one roadmap milestone: triage, PRD and architecture deltas, the roadmap row, the STATUS row, verified by `check --milestone <M>` and `next --inputs <M>`. Never re-bootstraps, never starts the milestone. |
 | `skills/driving-a-milestone/` | Drives one milestone: spawns one worker session per role (plan, execute, finish, probe, audit) in the milestone worktree, relays owner gates. Needs Herdr and the kit's `cc-session` skill (linked into the project as `.claude/skills/cris-managed-session`). `references/briefs.md` holds the brief templates and the handoff format. |
-| `scripts/milestone/` | `claim spawn brief wait status exit-check scope log-decision next driver-state`, shared parsers in `lib.sh`, project settings in `config` (written per project). Tests in `tests/`. |
+| `scripts/milestone/` | `claim spawn brief wait status exit-check scope log-decision next driver-state journal`, shared parsers in `lib.sh`, project settings in `config` (written per project). Tests in `tests/`. |
 | `scripts/hooks/` | `guard-scope.sh` (write scope per worker session), `require-handoff.sh` (Stop hook), `guard-superpowers-paths.sh`. Wired by `templates/claude/settings.json` or `templates/codex/hooks.json`; the same scripts serve both agents. |
 | `scripts/sdd/` | Repo-local `sdd-workspace`, `task-brief`, `review-package` (superpowers subagent-driven-development, writing under `docs/sdd/`). |
 | `scripts/bootstrap/` | `install <repo> [--agent claude\|codex]` copies scripts and hooks, links skills, seeds templates; `check` prints per-stage `OK / MISSING / MALFORMED / PLACEHOLDER / OWNER / DRIFT / NOTE` lines and `READY` / `NOT READY`; `check --list` is the manifest. |
-| `templates/` | `CLAUDE.md`, `docs/STATUS.md`, `docs/05-roadmap.md`, `docs/plans/README.md`, `docs/sdd/README.md`, `docs/adr/*`, `docs/spike-results.md`, `rules/component.md`, `claude/settings*.json`, `codex/hooks.json`, `AGENTS.md` (Codex), `gitignore.block`, `milestone.config`. `{{TOKEN}}` placeholders are the content decisions the bootstrap fills. |
+| `templates/` | `CLAUDE.md`, `docs/STATUS.md`, `docs/05-roadmap.md`, `docs/plans/README.md`, `docs/sdd/README.md`, `docs/journal/README.md`, `docs/adr/*`, `docs/spike-results.md`, `rules/component.md`, `claude/settings*.json`, `codex/hooks.json`, `AGENTS.md` (Codex), `gitignore.block`, `milestone.config`. `{{TOKEN}}` placeholders are the content decisions the bootstrap fills. |
 
 ### Scripts at a glance
 
@@ -112,6 +119,7 @@ The driver joins `exit-progress` with the script's own run of each check and rep
 | `next [<M>]` | driver, post-finish | `STATE:`, `PROPOSED-8:`, and `READY:` / `BLOCKED:` per unstarted milestone with each Plan input resolved |
 | `log-decision <M> [--apply]` | driver, on your "apply" | dry run by default: `INSERT:` / `REPLACE:` / `KEEP:` / `STATUS-ROW:` and a `DIFF:` |
 | `driver-state <M> get\|set\|add` | scripts and driver | the on-disk driver memory |
+| `journal <M> [--check\|--recheck\|--stdout]` | worker at session end; owner after the merge | rewrites `docs/journal/<slug>.md` from git, the plan and the handoffs; `--check` prints `JOURNAL=ok\|stale\|missing (…)` for `status`; `--recheck` runs the Verification table from the current checkout and records the run |
 
 ## Use
 
@@ -148,6 +156,7 @@ What the kit makes true regardless of what the agent decides to do:
 - **A worker cannot end without a handoff.** `require-handoff.sh` blocks the Stop until `docs/sdd/<M>/handoff.md` names this session. A cut connection ends at a handoff, not at you.
 - **Intent is frozen before execution.** `exit-check --freeze` locks the `## Exit checks` table and contract tests after your approval. Any later change is `TAMPERED` and goes to you.
 - **Driver memory survives the chat.** `driver.json` wins over anything the driver remembers. "resume <M>" continues from its `step`.
+- **Every milestone leaves a record you can re-run.** `docs/journal/<slug>.md` is written from facts at every session end and merged with the PR; `status` refuses a handoff without it. Its Verification table and Owner steps are re-runnable after the merge with `journal <M> --recheck`, no worktree or session needed.
 
 ## Owner gates
 
@@ -187,7 +196,8 @@ my-app/
 │   ├── 01-prd.md  02-architecture.md  05-roadmap.md  STATUS.md
 │   ├── plans/<slug>.md  .spec.md  .impl.md
 │   ├── sdd/<M>/                       progress.md tracked; briefs, handoff, driver.json, status-N.txt gitignored
-│   ├── adr/  journal/  spike-results.md
+│   ├── journal/<slug>.md              one record per milestone: implemented, verification, sessions, decisions
+│   ├── adr/  spike-results.md
 └── .worktrees/<M>/                    one per running milestone, branch <M>
 ```
 

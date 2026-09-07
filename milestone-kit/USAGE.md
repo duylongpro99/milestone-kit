@@ -72,6 +72,12 @@ The driver (`driving-a-milestone`) claims the STATUS row, creates `.worktrees/0A
 
 After the PR merges: "merged" → the driver logs §8 and prints `READY:` / `BLOCKED:` for the next milestones. You start the next one with "run <M>".
 
+What remains of a milestone after the worktree is gone is its journal, `docs/journal/<slug>.md` (`docs/journal/README.md`): what was implemented (every commit by task), the Verification table (the frozen exit checks with their last result), the numbered steps behind each `owner` check, the sessions that built it, and the §8 row it proposed. Every worker session rewrites it through `scripts/milestone/journal <M>`; the driver refuses to move past a handoff without it. To re-verify a merged milestone, any time, without the session that built it:
+
+```bash
+scripts/milestone/journal 0A --recheck      # root checkout, base branch: runs the table, records the run
+```
+
 ## 5. Reading `check`
 
 ```
@@ -95,6 +101,7 @@ Scripts and hooks are copies inside each project (hooks must exist in every clon
 # edit milestone-kit/scripts/... in this repo, run its tests
 milestone-kit/scripts/milestone/tests/guard-scope.sh
 milestone-kit/scripts/milestone/tests/post-finish.sh
+milestone-kit/scripts/milestone/tests/journal.sh
 # then, per project
 milestone-kit/scripts/bootstrap/install ~/code/my-app --no-templates
 ```
@@ -110,6 +117,7 @@ The scripts parse, they do not read. `templates/docs/plans/README.md` is the ref
 - `docs/plans/<slug>.md`: `## Exit checks` table `| E1 | <criterion> | clean-clone\|mechanical\|owner\|consumer:<M> | \`cmd\` |`; `## Status` with `**Proposed decision(s) for roadmap §8 …:**` then `> | date | decision | input | result |`.
 - `docs/plans/<slug>.impl.md`: `### Task N: title` with a `**Files:**` block of `- Create:/Modify:/Test:` bullets and backticked paths.
 - `docs/sdd/<M>/handoff.md`: the block in `skills/driving-a-milestone/references/briefs.md`.
+- `docs/journal/<slug>.md`: written by `scripts/milestone/journal`; hand-written only under `### Owner steps` (`**E3 — <criterion>**`, numbered steps, `Expected:`) and `## Notes`. `--recheck` reads its `## Verification` table.
 
 ## 8. Troubleshooting
 
@@ -121,6 +129,9 @@ The scripts parse, they do not read. `templates/docs/plans/README.md` is the ref
 | `spawn` → `WARN=task N lists no … **Files:**` | the `.impl.md` task has no Files block; the worker cannot touch code for it |
 | every worker commit asks for permission | `.claude/settings.local.json` missing in the root checkout |
 | `lock: TAMPERED` | `## Exit checks` or a contract test changed after freeze: re-plan, or the owner says "accept" → `--refreeze` |
+| `JOURNAL=missing` / `stale` | the worker ended without running `scripts/milestone/journal <M>` (or before its last handoff): the driver sends the journal message; the worker reruns it and commits the journal |
+| `OWNER (no steps in docs/journal/…)` | an `owner` exit check has no `**E<n> — …**` block under `### Owner steps`: the execute worker writes the steps; not a driver or owner edit |
+| `journal --recheck` → `no docs/journal/<slug>.md` | the milestone predates the journal, or its PR is not merged into this branch yet |
 
 ## 9. Workers on Codex
 

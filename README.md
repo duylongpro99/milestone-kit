@@ -43,8 +43,8 @@ milestone-kit/                       this repo
 | `milestone-kit/skills/bootstrapping-milestones/` | Prepares a repo from an idea or a PRD/architecture doc, stage by stage, until `scripts/bootstrap/check` prints `READY` | `.claude/skills/bootstrapping-milestones` |
 | `milestone-kit/skills/adding-a-milestone/` | Turns a feature idea on a prepared repo into one roadmap milestone: triage, PRD and architecture deltas, one roadmap row, one STATUS row, verified by `check --milestone <M>` and `next --inputs <M>`. Never re-bootstraps, never starts the milestone | `.claude/skills/adding-a-milestone` |
 | `milestone-kit/skills/driving-a-milestone/` | Drives one milestone: claims it, spawns a worker per role in the worktree, relays owner gates, logs the roadmap §8 row after merge | `.claude/skills/driving-a-milestone` |
-| `milestone-kit/scripts/` | `bootstrap/{install,check}`, `milestone/{claim,spawn,brief,wait,status,exit-check,scope,next,log-decision,driver-state,lib.sh}`, `hooks/{guard-scope,require-handoff,guard-superpowers-paths}.sh`, `sdd/*` | copied to `scripts/` (hooks must exist in every clone and worktree) |
-| `milestone-kit/templates/` | `CLAUDE.md`, `docs/*` seeds, `claude/settings*.json`, `codex/hooks.json`, `AGENTS.md`, `gitignore.block`, `milestone.config`; `{{TOKEN}}` placeholders are the content decisions the bootstrap fills | seeded once, never overwritten |
+| `milestone-kit/scripts/` | `bootstrap/{install,check}`, `milestone/{claim,spawn,brief,wait,status,exit-check,scope,next,log-decision,driver-state,journal,lib.sh}`, `hooks/{guard-scope,require-handoff,guard-superpowers-paths}.sh`, `sdd/*` | copied to `scripts/` (hooks must exist in every clone and worktree) |
+| `milestone-kit/templates/` | `CLAUDE.md`, `docs/*` seeds (incl. `docs/journal/README.md`), `claude/settings*.json`, `codex/hooks.json`, `AGENTS.md`, `gitignore.block`, `milestone.config`; `{{TOKEN}}` placeholders are the content decisions the bootstrap fills | seeded once, never overwritten |
 | `skills/cc-session/` | `create-session.sh [--p-name PANE] [--s-name NAME] [--split-r\|--split-d]`, `stop-session.sh`; `--s-name` is passed as `claude --name` | `.claude/skills/cris-managed-session` when `MS_AGENT=claude` (default) |
 | `skills/cx-session/` | Same flags for `codex`; `--s-name` is applied through Codex's `/rename` after launch | `.claude/skills/cris-managed-session` when `install --agent codex` |
 | `skills/superpowers/` | Agentic skill library: brainstorming, TDD, subagent-driven development, ... | `.claude/skills/obra-<name>` (and `.agents/skills/obra-<name>` for Codex) |
@@ -64,6 +64,7 @@ Then:
 in Claude Code:  "bootstrap this repo for milestones. Idea: <paragraph>"   until check prints READY
 inside Herdr:    "run 0A"        driving-a-milestone claims, spawns plan -> execute -> finish, relays owner gates
 after PR merge:  "merged"        logs the roadmap §8 row, prints READY: for the next milestones
+any time later:  scripts/milestone/journal 0A --recheck   re-runs the milestone journal's verification table, no worktree needed
 new feature:     "add to the roadmap: <paragraph>"   adding-a-milestone: triage, PRD delta, one roadmap row, then "run <M>"
 ```
 
@@ -95,6 +96,7 @@ Edit under `milestone-kit/`, run its tests, then refresh each project:
 ```bash
 milestone-kit/scripts/milestone/tests/guard-scope.sh
 milestone-kit/scripts/milestone/tests/post-finish.sh
+milestone-kit/scripts/milestone/tests/journal.sh
 milestone-kit/scripts/bootstrap/install ~/code/my-app --no-templates
 ```
 

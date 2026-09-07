@@ -123,7 +123,8 @@ if [ $templates = 1 ]; then
   seed docs/sdd/README.md docs/sdd/README.md
   seed docs/adr/README.md docs/adr/README.md
   seed docs/adr/0000-template.md docs/adr/0000-template.md
-  mkdir -p "$proj/docs/journal" "$proj/docs/tickets"; [ -e "$proj/docs/journal/.gitkeep" ] || { : > "$proj/docs/journal/.gitkeep"; echo "SEEDED: docs/journal/.gitkeep"; }
+  seed docs/journal/README.md docs/journal/README.md
+  mkdir -p "$proj/docs/tickets"
   [ -e "$proj/docs/tickets/.gitkeep" ] || { : > "$proj/docs/tickets/.gitkeep"; echo "SEEDED: docs/tickets/.gitkeep"; }
   [ -d "$proj/.claude/rules" ] && [ -z "$(ls -A "$proj/.claude/rules")" ] && { cp "$kit/templates/rules/component.md" "$proj/.claude/rules/_component.template.md"; echo "SEEDED: .claude/rules/_component.template.md (copy per component, then delete)"; }
 fi

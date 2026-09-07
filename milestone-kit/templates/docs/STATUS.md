@@ -1,7 +1,7 @@
 # Status
 
 **Read this first every session. Rewrite your own lines, never append. Keep under 60 lines.**
-History lives in `docs/journal/`; decisions live in `docs/05-roadmap.md §8`; per-milestone detail lives in `docs/plans/<milestone>.md ## Status`. This file is the index.
+History lives in `docs/journal/<milestone>.md` (one record per milestone: what was built, how to verify it); decisions live in `docs/05-roadmap.md §8`; per-milestone detail lives in `docs/plans/<milestone>.md ## Status`. This file is the index.
 
 _Project section last updated: {{DATE}} (owner)_
 
