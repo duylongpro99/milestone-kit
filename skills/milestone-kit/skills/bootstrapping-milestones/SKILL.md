@@ -30,7 +30,7 @@ install ─► check ─► [stage 0 intent] ─► [1 boundaries] ─► [2 roa
 1. **Install.** `scripts/bootstrap/install <repo>` from the kit (or `scripts/bootstrap/install .` after a first run). Relay every `MANUAL:` line to the owner verbatim; do not work around one.
 2. **Check.** `scripts/bootstrap/check` from the repo root. Work the **first non-OK line of the lowest stage**; never a later stage first (stage 2 depends on stage 0's component list, stage 3 on stage 2's first milestone id).
 3. **Do the stage** (table below), run `check` again, repeat until the stage's lines are all `OK:` / `NOTE:` / `OWNER:`.
-4. **Gate** where the table says so: show the owner the artifact (or its `git diff --stat` plus the sections that matter), `AskUserQuestion`: approve, or change. A change is applied and the stage is re-checked; the gate is not skipped because the second version "only fixed typos".
+4. **Gate** where the table says so: show the owner the artifact (or its `git diff --stat` plus the sections that matter), ask an owner question (`AskUserQuestion` on Claude Code, a plain numbered question on Codex): approve, or change. A change is applied and the stage is re-checked; the gate is not skipped because the second version "only fixed typos".
 5. Stage 5 `READY` → report the `NEXT: READY: <M>` line, the `OWNER:` lines still open, and stop. The owner runs `driving-a-milestone` with "run <M>". Never start it yourself.
 
 | Stage | Input | You produce | How | Gate |
@@ -39,7 +39,7 @@ install ─► check ─► [stage 0 intent] ─► [1 boundaries] ─► [2 roa
 | 1 boundaries | arch §3, §10 | `CLAUDE.md` from the template (fill every `{{…}}`; keep §0–§6 numbering, the briefs cite them); `.claude/rules/<component>.md` per `### 3.x` with `paths:` matching §10 | Rule content is what §3 says the component may and must never do; the template's bullets, nothing more. Delete `_component.template.md` when done | Owner reads the rules (diff) |
 | 2 roadmap | PRD + arch | `docs/05-roadmap.md` from the template: Phase 0 `0A` (scaffold, first shared schemas, harness) plus one gate-probe table only if the PRD has a measurable feasibility risk; Phase 1 `1A` vertical slice; later milestones only as ids with Plan inputs (their Exit cells may wait). `## 8.` keeps the header row; unknowns become `| — | <decision> | <input> | pending; unblocks <M> |` rows. `## 9.` one row per real risk | Every milestone: heading `### x.y Milestone <M> — …`, `**Plan inputs**` and `**Exit**` cells; Exit criteria are commands or measurements, split at `;`; `Interfaces fixed here` names consumers. Ids `0A`, `1A`, `1D.1` | Owner approves the milestone list, 0A/1A exit criteria, pending §8 rows |
 | 3 process docs | stage 2 ids | `docs/STATUS.md` row for the first milestone (`unclaimed`, Plan cell `docs/plans/<slug>.md`, slug = id + short kebab title); fill `{{…}}` in `docs/plans/README.md`, `docs/adr/README.md`; `docs/spike-results.md` when the roadmap has a Gate column | Templates; the only judgment is the slug and the test-kind wording taken from arch §9 or the PRD's testing section | none |
-| 4 tooling | kit | `scripts/milestone/config` filled (pane prefix, component roots from §10, contract-test globs, base branch, `MS_CHECK_ALLOW` for the project's tool names); `.claude/settings.json` hooks; `.gitignore` block; skill links | `install` did most; you fill the config and fix `MANUAL:` items the owner has answered | Owner creates `.claude/settings.local.json` from the example (their allowlist; never write it for them) |
+| 4 tooling | kit | `scripts/milestone/config` filled (pane prefix, component roots from §10, contract-test globs, base branch, `MS_CHECK_ALLOW` for the project's tool names, `MS_AGENT` = `claude` or `codex` as the owner says); the hooks file for that agent (`.claude/settings.json`, or `.codex/hooks.json` plus `AGENTS.md` and `.agents/skills` links, `install --agent codex`); `.gitignore` block; skill links | `install` did most; you fill the config and fix `MANUAL:` items the owner has answered | Owner creates `.claude/settings.local.json` from the example (Claude Code; their allowlist; never write it for them) or trusts the project in Codex |
 | 5 ready | all | nothing new | `check` → `READY`; `NEXT: READY: <M>`; commit everything as one `[docs] bootstrap milestone flow` commit on the base branch (only when the owner says commit) | Owner says "run <M>" |
 
 ## Placeholders
@@ -57,7 +57,7 @@ install ─► check ─► [stage 0 intent] ─► [1 boundaries] ─► [2 roa
 
 ## Owner gates (stop and ask; never proxy the owner)
 
-Goal and component list (stage 0) · rule files (stage 1) · milestone list, exit criteria, pending §8 rows (stage 2) · every `MANUAL:` line from `install` · `.claude/settings.local.json` · the commit · starting `driving-a-milestone`.
+Goal and component list (stage 0) · rule files (stage 1) · milestone list, exit criteria, pending §8 rows (stage 2) · every `MANUAL:` line from `install` · which agent runs the workers (`MS_AGENT`) · `.claude/settings.local.json` or Codex trust · the commit · starting `driving-a-milestone`.
 
 ## Red flags
 

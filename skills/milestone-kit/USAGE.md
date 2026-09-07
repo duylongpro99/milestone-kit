@@ -7,9 +7,10 @@ Two skills, one loop: **bootstrapping-milestones** prepares a repo; **driving-a-
 | Need | Why |
 |---|---|
 | `git`, `jq`, `gh` on PATH | scripts; `gh` opens the PR in the finish role |
-| [Herdr](https://github.com/herdrdev/herdr) with `HERDR_ENV=1` | the driver spawns worker panes through `head-chief/skills/managed-session` |
-| this repo checked out (`milestone-kit`) with `skills/superpowers` and `skills/head-chief` present | skills are symlinked from here |
-| Claude Code | driver and worker sessions |
+| [Herdr](https://github.com/herdrdev/herdr) with `HERDR_ENV=1` | the driver spawns worker panes through the kit's `cc-session` skill (linked into the project as `.claude/skills/cris-managed-session`) |
+| this repo checked out (`milestone-kit`) with the `skills/superpowers` submodule initialised (`git submodule update --init`) | skills are symlinked from here |
+| Claude Code | the driver session; the worker sessions by default |
+| Codex ≥ 0.145 with `features.hooks` and `features.skills` on | optional: the worker sessions when `MS_AGENT=codex` (§8) |
 
 ## 1. New project from an idea or a PRD
 
@@ -102,3 +103,25 @@ The scripts parse, they do not read. `templates/docs/plans/README.md` is the ref
 | `spawn` → `WARN=task N lists no … **Files:**` | the `.impl.md` task has no Files block; the worker cannot touch code for it |
 | every worker commit asks for permission | `.claude/settings.local.json` missing in the root checkout |
 | `lock: TAMPERED` | `## Exit checks` or a contract test changed after freeze: re-plan, or the owner says "accept" → `--refreeze` |
+
+## 8. Workers on Codex
+
+The driver is always a Claude Code session; the workers can be Codex. Everything the workers are held to (scope, handoff, superpowers paths) is enforced by the same three hook scripts, wired for Codex in `.codex/hooks.json` instead of `.claude/settings.json`.
+
+```bash
+~/personal/agent/milestone-kit/skills/milestone-kit/scripts/bootstrap/install . --agent codex
+scripts/bootstrap/check
+```
+
+What `--agent codex` changes, and nothing else:
+
+| Item | Claude Code (`MS_AGENT=claude`) | Codex (`MS_AGENT=codex`) |
+|---|---|---|
+| Hooks | `.claude/settings.json` | `.codex/hooks.json` (`templates/codex/hooks.json`), same events, same deny JSON; file edits arrive as `apply_patch` and every path in the patch is checked |
+| Rules file | `CLAUDE.md` | `CLAUDE.md` plus a seeded `AGENTS.md` that points Codex at it and tells it to read the `.claude/rules/<component>.md` whose `paths:` cover a file before editing (Codex has no path-scoped rules) |
+| Skills | `.claude/skills/` | `.claude/skills/` (the scripts resolve there) and the same links under `.agents/skills/` (the only place Codex looks) |
+| Session skill behind `.claude/skills/cris-managed-session` | `cc-session` (`claude --name`) | `cx-session` (`codex`, then `/rename` in two submits) |
+| Permissions | `.claude/settings.local.json`, copied into each worktree | none; the owner's approval policy and sandbox in `~/.codex/config.toml` |
+| Trust | Claude Code's trust dialog per new worktree | Codex's trust dialog per new worktree; project hooks load only after it, so the driver never proceeds past `RESULT=blocked` without the owner |
+
+`MS_AGENT` is recorded in `scripts/milestone/config` by `install` and read by `check`, `spawn` and the skills; switching agents is `install . --agent <other>` (the session-skill link and the hooks file follow). Known gap: the briefs name superpowers skills as `obra-<name>` (the link name) while Codex lists them by their `SKILL.md` name; Codex still finds them by description, and `$brainstorming` works in a pane. OpenCode is not supported (no command hooks and no Stop hook to hold the handoff).

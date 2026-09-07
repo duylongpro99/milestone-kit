@@ -8,7 +8,7 @@ Start every session with `docs/STATUS.md` (one page: phase, milestone, plan, nex
 
 | Task | Read |
 |---|---|
-| Code change inside a milestone | `docs/plans/<milestone>.md`; the `.claude/rules/<component>.md` loads itself when you touch its paths |
+| Code change inside a milestone | `docs/plans/<milestone>.md`; the `.claude/rules/<component>.md` whose `paths:` cover your files (Claude Code loads it by itself; on Codex open it before editing, see `AGENTS.md`) |
 | One SDD task (subagent) | Your brief in `docs/sdd/<milestone>/` + the rule file named in the plan. Nothing else |
 | Resuming a milestone | `docs/sdd/<milestone>/progress.md`, then the plan's `## Status` |
 | Writing a milestone plan | `docs/plans/README.md` (form + list of inputs) |
@@ -16,7 +16,7 @@ Start every session with `docs/STATUS.md` (one page: phase, milestone, plan, nex
 | Security · performance · dependency | arch §7 + prd §9 · arch §8 + prd §8 |
 | Breaking a rule · "why did we decide X?" | `docs/adr/README.md` · `docs/05-roadmap.md §8` |
 
-Never read at start: `docs/journal/`, `docs/sdd/` (except your own ledger), `05-roadmap`, past ADRs. One fact from a big doc → Explore subagent, keep the conclusion.
+Never read at start: `docs/journal/`, `docs/sdd/` (except your own ledger), `05-roadmap`, past ADRs. One fact from a big doc → a read-only subagent, keep the conclusion.
 
 **Writes.** Top-level session only, at session end: rewrite (never append) your row in `docs/STATUS.md` and `## Status` in `docs/plans/<milestone>.md`; history goes to `docs/journal/YYYY-MM-DD-<milestone>.md`. Subagents write only their own `task-N-report.md`. One session per milestone, in its own worktree, after claiming its STATUS row. Roadmap §8 and the STATUS Project section are owner-only; the one exception is the `driving-a-milestone` driver running `scripts/milestone/log-decision --apply` on the owner's recorded approval, which logs a merged milestone's drafted §8 row and removes its STATUS row (§6).
 
@@ -44,7 +44,7 @@ Plan (§1) followed, or an ADR explains the difference · {{DONE_COMMANDS}} pass
 
 ## 6. Superpowers
 
-Skills are `.claude/skills/obra-<name>`, symlinks into a shared kit: never edit the kit; overrides live here and in `docs/plans/README.md §Superpowers`. Superpowers governs *how* a session works; this file and `.claude/rules/` govern *what is allowed*. On conflict this file wins; note it in the plan `## Status`.
+Skills are `.claude/skills/obra-<name>` (Codex also sees them under `.agents/skills/`), symlinks into a shared kit: never edit the kit; overrides live here and in `docs/plans/README.md §Superpowers`. Superpowers governs *how* a session works; this file and `.claude/rules/` govern *what is allowed*. On conflict this file wins; note it in the plan `## Status`.
 
 `driving-a-milestone` (`.claude/skills/driving-a-milestone/`, a symlink into the kit; scripts in `scripts/milestone/`) automates the §0 session loop: a driver session spawns one worker per phase in the milestone worktree through `cris-managed-session` and relays owner gates. Driver plus one worker at a time counts as the milestone's one session; the driver writes only the STATUS claim, session briefs, and, after the PR merges and the owner says "apply", the §8 row plus STATUS-row removal through `scripts/milestone/log-decision`. Precondition and post-finish readiness come from `scripts/milestone/next`, never from the driver reading the roadmap.
 
