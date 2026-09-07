@@ -1,0 +1,50 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)",
+      "Bash(git switch:*)",
+      "Bash(git branch:*)",
+      "Bash(git worktree:*)",
+      "Bash(git push:*)",
+      "Bash(git fetch:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(git stash:*)",
+      "{{TOOLCHAIN_ALLOW}}",
+      "Bash(gh pr:*)",
+      "Bash(gh repo view:*)",
+      "Bash(gh api:*)",
+      "Bash(scripts/sdd/*)",
+      "Bash(scripts/milestone/*)",
+      "Bash(herdr agent:*)",
+      "Bash(herdr pane:*)",
+      "Bash(.claude/skills/cris-managed-session/scripts/*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(find:*)",
+      "Bash(wc:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(sed:*)",
+      "Bash(awk:*)",
+      "Bash(mkdir:*)",
+      "Bash(jq:*)",
+      "Bash(node:*)",
+      "Bash(python3:*)"
+    ],
+    "deny": [
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(rm -rf:*)"
+    ]
+  }
+}

@@ -1,0 +1,6 @@
+[submodule "skills/head-chief"]
+	path = skills/head-chief
+	url = git@cris:duylongpro99/head-chief.git
+[submodule "skills/superpowers"]
+	path = skills/superpowers
+	url = git@cris:obra/superpowers.git

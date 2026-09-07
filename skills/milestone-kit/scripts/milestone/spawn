@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# Spawn one worker Claude Code session inside a milestone worktree, as a Herdr
+# pane, through the cris-managed-session kit script (never re-implemented here).
+# Also: archives the previous session's handoff.md as session-<prev>-handoff.md
+# (so a stale one can never be read as this session's) keeping its `next` in
+# driver.json for scripts/milestone/brief, records pane/session/role/base in
+# driver.json (scripts/milestone/driver-state, the driver's on-disk memory),
+# resets the require-handoff.sh block counter, copies the root checkout's .claude/settings.local.json
+# (permission allowlist, gitignored, so the worktree lacks it) into the worktree,
+# refuses a worktree with uncommitted tracked changes (the previous worker broke
+# "commit before every handoff"; the driver reports it), and writes the session's
+# write scope to <WORKTREE>/.claude/scope.json via scripts/milestone/scope. That
+# file records the base SHA (HEAD now) and enables scripts/hooks/guard-scope.sh,
+# already wired in the tracked .claude/settings.json, for this worktree only.
+#
+# Usage: scripts/milestone/spawn <MILESTONE-ID> <ROLE>     ROLE: plan|execute|finish|probe|audit
+# Prints: PANE=<id> N=<session number> NAME=hg-<M>-<ROLE>-<N> WORKTREE=<path> BASE=<sha>
+#         SCOPE=<allow globs, space separated>   then one  WARN=<text>  line per scope warning
+# A WARN line is for the owner (the driver relays it before sending the brief).
+# The driver then runs scripts/milestone/brief <M> (writes the brief) and, in the
+# background, scripts/milestone/wait <M> --brief (sends the one-line prompt, waits).
+set -euo pipefail
+. "$(cd "$(dirname "$0")" && pwd)/lib.sh"
+[ $# -eq 2 ] || { echo "usage: spawn <MILESTONE-ID> <ROLE>" >&2; exit 2; }
+m=$1; role=$2
+case "$role" in plan|execute|finish|probe|audit) ;; *) echo "unknown role: $role (plan|execute|finish|probe|audit)" >&2; exit 2 ;; esac
+[ "${HERDR_ENV:-}" = 1 ] || { echo "not inside Herdr (HERDR_ENV!=1); cannot spawn sessions" >&2; exit 1; }
+root=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")
+wt="$root/.worktrees/$m"
+[ -d "$wt" ] || { echo "no worktree at $wt; run scripts/milestone/claim $m first" >&2; exit 3; }
+create="$root/.claude/skills/cris-managed-session/scripts/create-session.sh"
+[ -x "$create" ] || { echo "cris-managed-session skill not installed at .claude/skills/cris-managed-session" >&2; exit 4; }
+dirty=$(git -C "$wt" status --porcelain --untracked-files=no)
+[ -z "$dirty" ] || { printf 'worktree %s has uncommitted tracked changes; the previous worker did not commit before its handoff. Report to the owner:\n%s\n' "$wt" "$dirty" >&2; exit 6; }
+
+sdd="$wt/docs/sdd/$m"
+mkdir -p "$sdd"
+ds="$root/scripts/milestone/driver-state"
+# Archive the previous handoff (a stale one can never be read as this session's)
+# and keep its `next` for the brief; the driver no longer has to remember it.
+if [ -f "$sdd/handoff.md" ]; then
+  prev=$(sed -n 's/^session:[[:space:]]*//p' "$sdd/handoff.md" | head -1); [ -n "$prev" ] || prev=unknown
+  prev_next=$(sed -n 's/^next:[[:space:]]*//p' "$sdd/handoff.md" | head -1)
+  mv -f "$sdd/handoff.md" "$sdd/session-$prev-handoff.md"
+  "$ds" "$m" set prev_next "${prev_next:-none: previous handoff had no next line}" >/dev/null
+fi
+rm -f "$wt/.claude/stop-blocks"
+[ -f "$root/.claude/settings.local.json" ] && cp "$root/.claude/settings.local.json" "$wt/.claude/settings.local.json"
+n=$(find "$sdd" -maxdepth 1 -name 'session-*-brief.md' | wc -l | tr -d ' ')
+ms_load_config "$root"
+name="$MS_PANE_PREFIX-$m-$role-$n"
+scope=$("$root/scripts/milestone/scope" "$m" "$role" --session "$n" --write)
+out=$(cd "$wt" && "$create" --s-name "$name" --p-name "$name")
+pane=$(printf '%s' "$out" | sed -n 's/.*in pane \([^ ]*\).*/\1/p')
+[ -n "$pane" ] || { echo "could not parse pane id from: $out" >&2; exit 5; }
+"$ds" "$m" set pane "$pane" session "$n" role "$role" name "$name" base "$(printf '%s' "$scope" | jq -r .base)" \
+  slug "$(printf '%s' "$scope" | jq -r .slug)" worktree "$wt" step spawned nudges 0 wait_result null last_outcome null \
+  spawned_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >/dev/null
+echo "PANE=$pane N=$n NAME=$name WORKTREE=$wt BASE=$(printf '%s' "$scope" | jq -r .base)"
+echo "SCOPE=$(printf '%s' "$scope" | jq -r '.allow | join(" ")')"
+printf '%s' "$scope" | jq -r '.warnings[]? | "WARN=" + .'

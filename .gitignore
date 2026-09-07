@@ -1,0 +1,10 @@
+.DS_Store
+._*
+*.swp
+*~
+.vscode/
+.idea/
+*.log
+*.tmp
+.env
+.env.local
